@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import Persons from './components/Persons';
 import PersonForm from './components/PersonForm';
 import Filter from './components/Filter';
+import Notification from './components/Notification';
+
 import personService from './services/persons';
 
 const App = () => {
   const [ persons, setPersons] = useState([]);
   const [ newName, setNewName ] = useState('');
   const [ newNumber, setNewNumber ] = useState('');
-  const [ searchName, setSearchName] = useState('');
+  const [ searchName, setSearchName ] = useState('');
+  const [ notification, setNotification ] = useState(null);
 
   const hook = () => {
     personService
@@ -26,27 +29,71 @@ const App = () => {
     const existingPerson = persons.find(person => person.name === newName);
 
     if (existingPerson !== undefined) {
-      if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
-        const changedPerson = { ...existingPerson, number: newNumber }
-        personService
-          .update(changedPerson.id, changedPerson)
-          .then(returnedPerson => {
-            setPersons(persons.map(person => person.id !== changedPerson.id ? person : returnedPerson))
-          });
-      }
+      updatePerson(existingPerson);
     } else {
-      const personObject = {
-        name: newName,
-        number: newNumber,
-      }
+      createPerson();
+    }
+  }
+
+  const createPerson = () => {
+    const personObject = {
+      name: newName,
+      number: newNumber,
+    }
+    personService
+      .create(personObject)
+      .then(returnedPerson => {
+        showNotification({
+          message: `Added ${returnedPerson.name}`,
+          type: 'success'
+        });
+        setPersons(persons.concat(returnedPerson));
+      });
+  }
+
+  const updatePerson = (existingPerson) => {
+    if (window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
+      const changedPerson = { ...existingPerson, number: newNumber }
       personService
-        .create(personObject)
+        .update(changedPerson.id, changedPerson)
         .then(returnedPerson => {
-          setPersons(persons.concat(returnedPerson));
-          setNewName('');
-          setNewNumber('');
+          showNotification({
+            message: `Updated ${returnedPerson.name}`,
+            type: 'success'
+          });
+          setPersons(persons.map(person => person.id !== changedPerson.id ? person : returnedPerson))
+        })
+        .catch(error => {
+          showNotification({
+            message: `Information of ${changedPerson.name} has already been removed from server`,
+            type: 'error'
+          });
+          setPersons(persons.filter(p => p.id !== changedPerson.id))
         });
     }
+  }
+
+  const deletePerson = (person) => {
+    if (window.confirm(`Delete ${person.name} ?`)) {
+      personService
+      .deleteOne(person.id)
+      .then(response => {
+        showNotification({
+          message: `Deleted ${person.name}`,
+          type: 'success'
+        });
+        setPersons(persons.filter(p => p.id !== person.id));
+      });
+    }
+  }
+
+  const showNotification = (notification) => {
+    setNotification(notification);
+    setNewName('');
+    setNewNumber('');
+    setTimeout(() => {
+      setNotification(null)
+    }, 2000)
   }
 
   const handleNameChange = (event) => {
@@ -60,16 +107,6 @@ const App = () => {
   const handleSearchChange = (event) => {
     setSearchName(event.target.value);
   }
-
-  const deletePerson = (person) => {
-    if (window.confirm(`Delete ${person.name} ?`)) {
-      personService
-      .deleteOne(person.id)
-      .then(response => {
-        setPersons(persons.filter(p => p.id !== person.id));
-      })
-    }
-  }
   
   const filterPersons = (person) => {
     return person.name.toLowerCase().includes(searchName.toLowerCase());
@@ -78,7 +115,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
-      <Filter searchName={searchName} handleSearchChange={handleSearchChange}/>
+      <Notification notification={notification} />
+      <Filter searchName={searchName} handleSearchChange={handleSearchChange} />
       <h2>add a new</h2>
       <PersonForm
         addPerson={addPerson}
