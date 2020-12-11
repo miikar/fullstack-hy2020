@@ -37,8 +37,12 @@ const App = () => {
             units: 'm'
           }
         })
-        .then(response =>{
-          setWeather(response.data);
+        .then(response => {
+          if (response.data.error) {
+            console.log(response.data.error);
+          } else {
+            setWeather(response.data);
+          }
         });
     } else {
       setWeather(null);
