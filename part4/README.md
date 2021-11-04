@@ -1,11 +1,11 @@
 ### Excercises
 4.1 DONE  
 4.2 DONE  
-4.3  
-4.4  
-4.5  
-4.6  
-4.7  
+4.3 DONE  
+4.4 DONE  
+4.5 DONE  
+4.6 DONE  
+4.7 DONE  
 4.8  
 4.9  
 4.10  
