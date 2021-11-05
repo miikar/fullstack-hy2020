@@ -17,7 +17,7 @@ beforeEach(async () => {
 })
 
 // Test cases
-describe('existing blogs in database', () => {
+describe('blogs in database', () => {
   test('are returned as json', async () => {
     const response = await api
       .get('/api/blogs')
@@ -28,8 +28,8 @@ describe('existing blogs in database', () => {
   })
 
   test('have unique property called id', async () => {
-    const blogs = await helper.blogsInDb()
-    expect(blogs[0].id).toBeDefined()
+    const blogs = await api.get('/api/blogs')
+    expect(blogs.body[0].id).toBeDefined()
   })
 })
 
