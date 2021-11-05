@@ -17,8 +17,8 @@ beforeEach(async () => {
 })
 
 // Test cases
-describe('with blogs in database', () => {
-  test('blogs are returned as json', async () => {
+describe('existing blogs in database', () => {
+  test('are returned as json', async () => {
     const response = await api
       .get('/api/blogs')
       .expect(200)
@@ -27,7 +27,7 @@ describe('with blogs in database', () => {
     expect(response.body).toHaveLength(helper.initialBlogs.length)
   })
 
-  test('blogs have unique property called id', async () => {
+  test('have unique property called id', async () => {
     const blogs = await helper.blogsInDb()
     expect(blogs[0].id).toBeDefined()
   })
@@ -112,9 +112,29 @@ describe('deletion of a blog', () => {
       helper.initialBlogs.length - 1
     )
 
-    const contents = blogsAtEnd.map(r => r.content)
+    const titles = blogsAtEnd.map(r => r.title)
 
-    expect(contents).not.toContain(blogToDelete.content)
+    expect(titles).not.toContain(blogToDelete.title)
+  })
+})
+
+describe('when updating a specific blog', () => {
+  test('likes are succesfully updated if id is valid', async () => {
+    const blogsAtStart = await helper.blogsInDb()
+    const blogToUpdate = blogsAtStart[0]
+    const newBlog = {
+      likes: 77
+    }
+
+    await api
+      .put(`/api/blogs/${blogToUpdate.id}`)
+      .send(newBlog)
+      .expect(200)
+
+    const blogsAtEnd = await helper.blogsInDb()
+
+    const updated = blogsAtEnd.find(item => item.id === blogToUpdate.id)
+    expect(updated.likes).toBe(newBlog.likes)
   })
 })
 
