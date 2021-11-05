@@ -3,8 +3,10 @@ const helper = require('./test_helper')
 const supertest = require('supertest')
 const app = require('../app')
 const api = supertest(app)
+const bcrypt = require('bcrypt')
 
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 // Setup
 beforeEach(async () => {
@@ -135,6 +137,142 @@ describe('when updating a specific blog', () => {
 
     const updated = blogsAtEnd.find(item => item.id === blogToUpdate.id)
     expect(updated.likes).toBe(newBlog.likes)
+  })
+})
+
+describe('when there is initially one user in db', () => {
+  beforeEach(async () => {
+    await User.deleteMany({})
+
+    const passwordHash = await bcrypt.hash('salasana', 10)
+    const user = new User({ username: 'root', passwordHash })
+
+    await user.save()
+  })
+
+  test('creation succeeds with a new username', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+      username: 'admin',
+      name: 'Admin User',
+      password: 'salasana',
+    }
+
+    await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    const usersAtEnd = await helper.usersInDb()
+    expect(usersAtEnd).toHaveLength(usersAtStart.length + 1)
+
+    const usernames = usersAtEnd.map(u => u.username)
+    expect(usernames).toContain(newUser.username)
+  })
+
+  test('creation fails with proper statuscode and message if username already taken', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+      username: 'root',
+      name: 'Superuser',
+      password: 'salasana',
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    expect(result.body.error).toContain('`username` to be unique')
+
+    const usersAtEnd = await helper.usersInDb()
+    expect(usersAtEnd).toHaveLength(usersAtStart.length)
+  })
+
+  test('creation fails with proper statuscode and message if username is missing', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+      name: 'Testuser',
+      password: 'salasana'
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    expect(result.body.error).toContain('`username` is required')
+
+    const usersAtEnd = await helper.usersInDb()
+    expect(usersAtEnd).toHaveLength(usersAtStart.length)
+  })
+
+  test('creation fails with proper statuscode and message if password is missing', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+      username: 'test',
+      name: 'Testuser',
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    expect(result.body.error).toContain('`password` is required')
+
+    const usersAtEnd = await helper.usersInDb()
+    expect(usersAtEnd).toHaveLength(usersAtStart.length)
+  })
+
+  test('creation fails with proper statuscode and message if password is too short', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+      username: 'test',
+      name: 'Testuser',
+      password: 'sa',
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    expect(result.body.error).toContain('`password` is shorter than the minimum allowed length')
+
+    const usersAtEnd = await helper.usersInDb()
+    expect(usersAtEnd).toHaveLength(usersAtStart.length)
+  })
+
+  test('creation fails with proper statuscode and message if username is too short', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+      username: 'te',
+      name: 'Testuser',
+      password: 'salasana',
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    expect(result.body.error).toContain('Path `username` (`te`) is shorter than the minimum allowed length')
+
+    const usersAtEnd = await helper.usersInDb()
+    expect(usersAtEnd).toHaveLength(usersAtStart.length)
   })
 })
 
