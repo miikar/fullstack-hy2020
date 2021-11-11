@@ -34,17 +34,6 @@ beforeEach(async () => {
   }
 })
 
-// Login
-var testLoginToken = null
-
-beforeEach(async () => {
-  const loginUser = helper.initialUsers[0]
-  const tokenResponse = await api
-    .post('/api/login')
-    .send(loginUser)
-  testLoginToken = `bearer ${tokenResponse.body.token}`
-})
-
 // Test cases
 describe('blogs in database', () => {
   test('are returned as json', async () => {
@@ -64,6 +53,16 @@ describe('blogs in database', () => {
 })
 
 describe('addition of a new blog', () => {
+  // Login
+  var testLoginToken = null
+
+  beforeEach(async () => {
+    const loginUser = helper.initialUsers[0]
+    const tokenResponse = await api
+      .post('/api/login')
+      .send(loginUser)
+    testLoginToken = `bearer ${tokenResponse.body.token}`
+  })
 
   test('succeeds with status code 201 with valid data and token', async () => {
     const newBlog = {
@@ -274,7 +273,6 @@ describe('when updating a specific blog', () => {
 
     await api
       .put(`/api/blogs/${blogToUpdate.id}`)
-      .set({ Authorization: testLoginToken })
       .send(newBlog)
       .expect(200)
 
