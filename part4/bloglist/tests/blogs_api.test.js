@@ -8,7 +8,23 @@ const bcrypt = require('bcrypt')
 const Blog = require('../models/blog')
 const User = require('../models/user')
 
-// Setup
+// Add test users
+beforeEach(async () => {
+  await User.deleteMany({})
+
+  for (let user of helper.initialUsers) {
+    const passwordHash = await bcrypt.hash(user.password, 10)
+    const userObject = new User({
+      username: user.username,
+      name: user.name,
+      passwordHash,
+    })
+
+    await userObject.save()
+  }
+})
+
+// Add test blogs
 beforeEach(async () => {
   await Blog.deleteMany({})
 
@@ -16,6 +32,17 @@ beforeEach(async () => {
     let blogObject = new Blog(blog)
     await blogObject.save()
   }
+})
+
+// Login
+var testLoginToken = null
+
+beforeEach(async () => {
+  const loginUser = helper.initialUsers[0]
+  const tokenResponse = await api
+    .post('/api/login')
+    .send(loginUser)
+  testLoginToken = `bearer ${tokenResponse.body.token}`
 })
 
 // Test cases
@@ -30,13 +57,15 @@ describe('blogs in database', () => {
   })
 
   test('have unique property called id', async () => {
-    const blogs = await api.get('/api/blogs')
+    const blogs = await api
+      .get('/api/blogs')
     expect(blogs.body[0].id).toBeDefined()
   })
 })
 
 describe('addition of a new blog', () => {
-  test('succeeds with status code 201 with valid data', async () => {
+
+  test('succeeds with status code 201 with valid data and token', async () => {
     const newBlog = {
       title: 'This is a test blog',
       author: 'Test User',
@@ -46,6 +75,7 @@ describe('addition of a new blog', () => {
   
     await api
       .post('/api/blogs')
+      .set({ Authorization: testLoginToken})
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -59,11 +89,33 @@ describe('addition of a new blog', () => {
     )
   })
 
+  test('fails with status code 401 with invalid token', async () => {
+    const newBlog = {
+      title: 'This is a test blog',
+      author: 'Test User',
+      url: 'https://fullstackopen.com/en/part4/testing_the_backend#exercises-4-8-4-12',
+      likes: 1234
+    }
+  
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(401)
+  
+    const blogsAtEnd = await helper.blogsInDb()
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
+  
+    const blogTitles = blogsAtEnd.map(n => n.title)
+    expect(blogTitles).not.toContain(
+      'This is a test blog'
+    )
+  })
+
   test('sets likes to 0 if not specified in request', async () => {
     // Expect likes to be as specified in request
     const blogsAtStart = await helper.blogsInDb()
+
     expect(blogsAtStart[0].likes).toBe(helper.initialBlogs[0].likes)
-  
     // Expect likes to be 0 if unspecified in request
     const blogWithoutLikes = {
       title: 'Blog without likes',
@@ -73,6 +125,7 @@ describe('addition of a new blog', () => {
   
     const response = await api
       .post('/api/blogs')
+      .set({ Authorization: testLoginToken})
       .send(blogWithoutLikes)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -83,40 +136,131 @@ describe('addition of a new blog', () => {
     expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
   })
   
-  test('fails with statuscode 400 if title and url are invalid', async () => {
+  test('fails with statuscode 400 if title is invalid', async () => {
     const newBlog = {
+      url: 'https://fullstackopen.com/en/part4/testing_the_backend#exercises-4-8-4-12',
       author: 'Test User',
     }
   
-    await api
+    const response = await api
       .post('/api/blogs')
+      .set({ Authorization: testLoginToken})
       .send(newBlog)
       .expect(400)
   
     const blogsAtEnd = await helper.blogsInDb()
+    expect(response.body.error).toContain('title missing')
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
+  })
+
+  test('fails with statuscode 400 if url is invalid', async () => {
+    const newBlog = {
+      title: 'Test title',
+      author: 'Test User',
+    }
+  
+    const response = await api
+      .post('/api/blogs')
+      .set({ Authorization: testLoginToken})
+      .send(newBlog)
+      .expect(400)
+  
+    const blogsAtEnd = await helper.blogsInDb()
+    expect(response.body.error).toContain('url missing')
     expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
   })
 })
 
 
 describe('deletion of a blog', () => {
-  test('succeeds with status code 204 if id is valid', async () => {
-    const blogsAtStart = await helper.blogsInDb()
-    const blogToDelete = blogsAtStart[0]
+  test('succeeds with status code 204 if id is valid and user token is valid', async () => {
+    const loginUser = helper.initialUsers[0]
+    // Login
+    let response = await api
+      .post('/api/login')
+      .send(loginUser)
+      .expect(200)
+    
+    const token = `bearer ${response.body.token}`
+
+    // Create blog
+    const newBlog = {
+      title: 'This is a test blog',
+      author: 'Test User',
+      url: 'https://fullstackopen.com/en/part4/testing_the_backend#exercises-4-8-4-12',
+      likes: 1234
+    }
+
+    response = await api
+      .post('/api/blogs')
+      .set({ Authorization: token })
+      .send(newBlog)
+      .expect(201)
+
+    const blogToDelete = response.body
 
     await api
       .delete(`/api/blogs/${blogToDelete.id}`)
+      .set({ Authorization: token })
       .expect(204)
 
     const blogsAtEnd = await helper.blogsInDb()
 
-    expect(blogsAtEnd).toHaveLength(
-      helper.initialBlogs.length - 1
-    )
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
 
     const titles = blogsAtEnd.map(r => r.title)
 
     expect(titles).not.toContain(blogToDelete.title)
+  })
+
+  test('fails with status code 401 if token is invalid', async () => {
+    const loginUser = helper.initialUsers[0]
+    const loginUser2 = helper.initialUsers[1]
+
+    // Login
+    let response = await api
+      .post('/api/login')
+      .send(loginUser)
+      .expect(200)
+    
+    const token = `bearer ${response.body.token}`
+
+    // Create blog
+    const newBlog = {
+      title: 'This is a test blog',
+      author: 'Test User',
+      url: 'https://fullstackopen.com/en/part4/testing_the_backend#exercises-4-8-4-12',
+      likes: 1234
+    }
+
+    response = await api
+      .post('/api/blogs')
+      .set({ Authorization: token })
+      .send(newBlog)
+      .expect(201)
+
+    const blogToDelete = response.body
+
+    // Another login
+    response = await api
+      .post('/api/login')
+      .send(loginUser2)
+      .expect(200)
+    
+    const token2 = `bearer ${response.body.token}`
+
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .set({ Authorization: token2 })
+      .expect(401)
+
+    const blogsAtEnd = await helper.blogsInDb()
+
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+
+    const titles = blogsAtEnd.map(r => r.title)
+
+    expect(titles).toContain(blogToDelete.title)
   })
 })
 
@@ -130,6 +274,7 @@ describe('when updating a specific blog', () => {
 
     await api
       .put(`/api/blogs/${blogToUpdate.id}`)
+      .set({ Authorization: testLoginToken })
       .send(newBlog)
       .expect(200)
 
