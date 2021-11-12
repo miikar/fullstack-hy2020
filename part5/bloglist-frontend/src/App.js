@@ -16,6 +16,8 @@ const App = () => {
 
   const blogFormRef = useRef()
 
+  const sortedBlogs = blogs.sort((a, b) => a.likes < b.likes ? 1 : -1)
+
   useEffect(() => {
     blogService.getAll().then(blogs =>
       setBlogs( blogs )
@@ -31,17 +33,50 @@ const App = () => {
     }
   }, [])
 
-  const addBlog = (blogObject) => {
-    blogFormRef.current.toggleVisibility()
-    blogService
-      .create(blogObject)
-      .then((returnedBlog) =>{
-        setBlogs(blogs.concat(returnedBlog))
-        showNotification({
-          message: `a new blog ${blogObject.title} by ${blogObject.author} added`,
-          type: 'success'
-        })
+  const addBlog = async (blogObject) => {
+    try {
+      const returnedBlog = await blogService.create(blogObject)      
+      setBlogs(blogs.concat(returnedBlog))
+      blogFormRef.current.toggleVisibility()
+      showNotification({
+        message: `a new blog ${blogObject.title} by ${blogObject.author} added`,
+        type: 'success'
       })
+    } catch (exception) {
+      console.log(exception)
+      showNotification({
+        message: `adding blog failed`,
+        type: 'error'
+      })
+    }
+  }
+
+  const updateBlog = async (id, changedBlog) => {
+    try {
+      const returnedBlog = await blogService.update(id, changedBlog)
+      setBlogs(blogs.map(blog => blog.id !== id ? blog : returnedBlog))
+    } catch (exception) {
+      console.log(exception)
+      showNotification({
+        message: `updating blog ${changedBlog.title} by ${changedBlog.author} failed`,
+        type: 'error'
+      })
+    }
+  }
+
+  const deleteBlog = async (id, blog) => {
+    if (window.confirm(`Remove blog ${blog.title} by ${blog.author} ?`)) {
+      try {
+        await blogService.deleteOne(id)
+        setBlogs(blogs.filter(b => b.id !== blog.id));
+      } catch (exception) {
+        console.log(exception)
+        showNotification({
+          message: `deleting blog ${blog.title} by ${blog.author} failed`,
+          type: 'error'
+        })
+      }
+    }
   }
 
   const handleLogin = async (event) => {
@@ -112,8 +147,13 @@ const App = () => {
         </div>
       }
 
-      {blogs.map(blog =>
-        <Blog key={blog.id} blog={blog} />
+      {sortedBlogs.map(blog =>
+        <Blog 
+          key={blog.id}
+          blog={blog} 
+          loggerUsername={user === null ? false : user.username}
+          updateBlog={(changedBlog) => updateBlog(blog.id, changedBlog)}
+          deleteBlog={() => deleteBlog(blog.id, blog)} />
       )}
     </div>
   )
