@@ -49,7 +49,7 @@ const Blog = ({ loggerUsername, blog, updateBlog, deleteBlog }) => {
   )
 
   return (
-    <div style={blogStyle}>
+    <div style={blogStyle} className='blog'>
       {!showDetails
         ? simpleBlog()
         : detailedBlog()}
