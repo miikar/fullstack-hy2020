@@ -12,4 +12,4 @@ const Notification = ({ notification }) => {
   )
 }
 
-export default Notification;
+export default Notification

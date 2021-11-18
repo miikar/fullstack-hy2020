@@ -9,8 +9,8 @@ import loginService from './services/login'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
-  const [notification, setNotification] = useState(null);
-  const [username, setUsername] = useState('') 
+  const [notification, setNotification] = useState(null)
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [user, setUser] = useState(null)
 
@@ -21,7 +21,7 @@ const App = () => {
   useEffect(() => {
     blogService.getAll().then(blogs =>
       setBlogs( blogs )
-    )  
+    )
   }, [])
 
   useEffect(() => {
@@ -35,7 +35,7 @@ const App = () => {
 
   const addBlog = async (blogObject) => {
     try {
-      const returnedBlog = await blogService.create(blogObject)      
+      const returnedBlog = await blogService.create(blogObject)
       setBlogs(blogs.concat(returnedBlog))
       blogFormRef.current.toggleVisibility()
       showNotification({
@@ -45,7 +45,7 @@ const App = () => {
     } catch (exception) {
       console.log(exception)
       showNotification({
-        message: `adding blog failed`,
+        message: 'adding blog failed',
         type: 'error'
       })
     }
@@ -68,7 +68,7 @@ const App = () => {
     if (window.confirm(`Remove blog ${blog.title} by ${blog.author} ?`)) {
       try {
         await blogService.deleteOne(id)
-        setBlogs(blogs.filter(b => b.id !== blog.id));
+        setBlogs(blogs.filter(b => b.id !== blog.id))
       } catch (exception) {
         console.log(exception)
         showNotification({
@@ -96,7 +96,7 @@ const App = () => {
       setPassword('')
     } catch (exception) {
       showNotification({
-        message: `wrong username or password`,
+        message: 'wrong username or password',
         type: 'error'
       })
     }
@@ -111,7 +111,7 @@ const App = () => {
   }
 
   const showNotification = (notification) => {
-    setNotification(notification);
+    setNotification(notification)
     setTimeout(() => {
       setNotification(null)
     }, 3000)
@@ -148,9 +148,9 @@ const App = () => {
       }
 
       {sortedBlogs.map(blog =>
-        <Blog 
+        <Blog
           key={blog.id}
-          blog={blog} 
+          blog={blog}
           loggerUsername={user === null ? false : user.username}
           updateBlog={(changedBlog) => updateBlog(blog.id, changedBlog)}
           deleteBlog={() => deleteBlog(blog.id, blog)} />

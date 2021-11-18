@@ -19,7 +19,7 @@ const Blog = ({ loggerUsername, blog, updateBlog, deleteBlog }) => {
     <div>
       {blog.title} {blog.author}
       <button onClick={toggleDetails}>view</button>
-    </div>    
+    </div>
   )
 
   const increaseBlogLikes = () => {
@@ -54,6 +54,6 @@ const Blog = ({ loggerUsername, blog, updateBlog, deleteBlog }) => {
         ? simpleBlog()
         : detailedBlog()}
     </div>
-)}
+  )}
 
 export default Blog
