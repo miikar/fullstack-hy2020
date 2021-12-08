@@ -151,7 +151,7 @@ const App = () => {
         <Blog
           key={blog.id}
           blog={blog}
-          loggerUsername={user === null ? false : user.username}
+          loggedUserId={user === null ? false : user.userid}
           updateBlog={(changedBlog) => updateBlog(blog.id, changedBlog)}
           deleteBlog={() => deleteBlog(blog.id, blog)} />
       )}

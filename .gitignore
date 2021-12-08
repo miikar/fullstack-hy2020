@@ -1,6 +1,10 @@
 # VSCODE
 .vscode
 
+#cypress/videos/
+
+videos
+
 # Logs
 logs
 *.log
