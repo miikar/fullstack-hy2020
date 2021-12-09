@@ -1,12 +1,12 @@
 ### Excercises
 6.1 DONE  
 6.2 DONE  
-6.3  
-6.4  
-6.5  
-6.6  
-6.7  
-6.8  
+6.3 DONE  
+6.4 DONE  
+6.5 DONE  
+6.6 DONE  
+6.7 DONE  
+6.8 DONE  
 6.9  
 6.10  
 6.11  
