@@ -18,7 +18,7 @@
     {
       "content": "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.",
       "id": "36975",
-      "votes": 0
+      "votes": 1
     },
     {
       "content": "Premature optimization is the root of all evil.",
@@ -32,22 +32,22 @@
     },
     {
       "content": "New anecdote from ui to json-server database",
-      "votes": 8,
+      "votes": 15,
       "id": "GbpbjCM"
     },
     {
       "content": "New anecdote with async action creators",
-      "votes": 5,
+      "votes": 11,
       "id": "eDDAJIu"
     },
     {
       "content": "Another new anecdote",
-      "votes": 1,
+      "votes": 2,
       "id": "co2oV2h"
     },
     {
       "content": "Test new notification",
-      "votes": 0,
+      "votes": 3,
       "id": "Dq5VF9W"
     },
     {
@@ -57,13 +57,28 @@
     },
     {
       "content": "Test notification 3",
-      "votes": 10,
+      "votes": 15,
       "id": "o-Ze-a6"
     },
     {
       "content": "Fixed create notification",
       "votes": 0,
       "id": "hETUalY"
+    },
+    {
+      "content": "Create new with redux connect",
+      "votes": 0,
+      "id": "wkDAGVU"
+    },
+    {
+      "content": "Test",
+      "votes": 0,
+      "id": "lY2-jEO"
+    },
+    {
+      "content": "Test",
+      "votes": 0,
+      "id": "HhHjR46"
     }
   ]
 }
