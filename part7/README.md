@@ -2,9 +2,9 @@
 7.1 DONE  
 7.2 DONE  
 7.3 DONE  
-7.4  
-7.5  
-7.6  
+7.4 DONE  
+7.5 DONE  
+7.6 DONE  
 7.7  
 7.8  
 7.9  
