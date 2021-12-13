@@ -1,6 +1,11 @@
 import React, { useState } from 'react'
+import { useDispatch } from 'react-redux'
+import { setNotification } from '../reducers/notificationReducer'
+import { createBlog } from '../reducers/blogReducer'
 
-const NewBlog = (props) => {
+const NewBlog = ({ blogFormRef }) => {
+  const dispatch = useDispatch()
+
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [url, setUrl] = useState('')
@@ -8,13 +13,19 @@ const NewBlog = (props) => {
   const handleNewBlog = (event) => {
     event.preventDefault()
 
-    props.createBlog({
-      title, author, url
-    })
-
     setTitle('')
     setAuthor('')
     setUrl('')
+
+    blogFormRef.current.toggleVisibility()
+    dispatch(createBlog({
+      title, author, url
+    }))
+    dispatch(setNotification(
+      `a new blog '${title}' by ${author} added!`,
+      'success',
+      5
+    ))
   }
 
   return (
